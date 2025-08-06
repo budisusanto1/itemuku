@@ -1,0 +1,523 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model address {
+  address_id     String  @id
+  address_type   Int?    @default(0)
+  address_name   String?
+  contact_id     String?
+  country_id     String?
+  state_id       String?
+  city_id        String?
+  district_id    String?
+  subdistrict_id String?
+  zip            String?
+}
+
+model akun {
+  akunid   Int     @id @default(autoincrement())
+  akunkode String?
+  jenid    Int?
+  akunnama String?
+  jenis    Int?    @db.SmallInt
+  debit    Float?
+  kredit   Float?
+  jen      jen?    @relation(fields: [jenid], references: [jenid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model cash {
+  cashid      String       @id(map: "tbcash_pkey")
+  contactid   String?
+  cashdate    DateTime?    @db.Date
+  cashduedate DateTime?    @db.Date
+  refid       String?
+  cashtype    String?
+  cashno      String
+  currencyid  String?
+  termid      String?
+  term        Int?         @default(0)
+  emp1id      String?
+  emp2id      String?
+  emp3id      String?
+  note        String?
+  memo        String?
+  tag         String?
+  subtotal    Float?       @default(0)
+  disc        Float?       @default(0)
+  discitem    Float?       @default(0)
+  isdisctax   Int?         @default(0)
+  istax       Int?
+  tax         Float?       @default(0)
+  total       Float?       @default(0)
+  warehouseid String?
+  createdby   String?
+  createdip   String?
+  createdat   DateTime?    @db.Timestamp(6)
+  updatedby   String?
+  updatedip   String?
+  updatedat   DateTime?    @db.Timestamp(6)
+  status      Int?
+  cashmethod  String?
+  voucher     String?
+  vouchertext String?
+  totalpaid   Float?       @default(0)
+  otherdisc   Float?       @default(0)
+  akunid      String?
+  cashdetail  cashdetail[]
+}
+
+model cashdetail {
+  cashdetailid   String  @id(map: "tbcashdetail_pkey")
+  cashid         String
+  cashdetailtype String?
+  qty            Float?  @default(0)
+  amount         Float?  @default(0)
+  paid           Float?  @default(0)
+  ord            Int?    @default(1)
+  iscut          Int?    @default(0)
+  cash           cash    @relation(fields: [cashid], references: [cashid], onDelete: Cascade, map: "fk_cash_cashdetail_id")
+}
+
+model coa_template {
+  coa_template_id String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  coa_type        String
+  coa_no          Int
+  coa_name_en     String
+  coa_name_id     String
+  coa_level       Int
+  coa_refid       String? @db.Uuid
+  coa_status      Int
+  coa_category    Int?
+}
+
+model coas {
+  coa_id        String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  coa_companyid String?   @db.Uuid
+  coa_type      String
+  coa_no        String
+  coa_name_en   String?
+  coa_name_id   String?
+  coa_level     Int?      @default(0)
+  coa_refid     String?   @db.Uuid
+  coa_status    Int?      @default(0)
+  created_by    String?   @db.Uuid
+  created_at    DateTime? @db.Timestamp(6)
+  updated_by    String?   @db.Uuid
+  updated_at    DateTime? @db.Timestamp(6)
+  coa_category  Int?
+}
+
+model company {
+  companyid          String    @id @default(dbgenerated("uuid_generate_v4()"))
+  nama_lengkap       String
+  nama_perusahaan    String
+  jabatan_perusahaan String
+  jumlah_karyawan    String?
+  email              String
+  nomor_telepon      String
+  userid             String?
+  kode_company       String?
+  status             Int?
+  subs_id            String?
+  package            String?
+  tipe               String?
+  tglstartsubs       DateTime? @db.Timestamp(6)
+  tglendsubs         DateTime? @db.Timestamp(6)
+  subsprice          Float?
+  subs_status        Int?      @db.SmallInt
+  statuspaid         String?
+  contact_code       String?
+  product_code       String?
+  request_code       String?
+  ord_code           String?
+  delivery_code      String?
+  invoices_code      String?
+  return_code        String?
+  quotation_code     String?
+  cashin_code        String?
+  cashout_code       String?
+  company_photo      String?
+}
+
+model contact {
+  contact_id         String    @id
+  contact_no         String?
+  contact_name       String?
+  contact_bod        DateTime? @db.Date
+  contact_bop        String?
+  contact_typeid     Int?      @default(0)
+  contact_typeno     String?
+  contact_gender     String?   @default(dbgenerated("0"))
+  contact_married    String?   @default(dbgenerated("0"))
+  contact_education  String?   @default(dbgenerated("0"))
+  contact_religion   String?   @default(dbgenerated("0"))
+  contact_phone1     String?
+  contact_phone2     String?
+  contact_email1     String?
+  contact_email2     String?
+  contact_status     String?
+  contact_isvendor   Int?      @default(0)
+  contact_iscustomer Int?      @default(0)
+  contact_isemployee Int?      @default(0)
+  contact_isother    Int?      @default(0)
+  contact_iscompany  Int?      @default(0)
+  companyid          String?
+  idtype             String?
+  idnumber           String?
+  jobid              String?
+  jobposition        String?
+  jobcompany         String?
+  jobstart           DateTime? @db.Date
+  jobend             DateTime? @db.Date
+  countryid          String?
+  stateid            String?
+  cityid             String?
+  districtid         String?
+  subdistrictid      String?
+  address            String?
+  zip                String?
+  updatedat          DateTime? @db.Timestamp(6)
+  updatedip          String?
+  updatedby          String?
+  createdat          DateTime? @db.Timestamp(6)
+  createdip          String?
+  createdby          String?
+}
+
+/// This model has been renamed to 'Renamedenum' during introspection, because the original name 'enum' is reserved.
+model Renamedenum {
+  enumid      String    @id
+  enumtype    String
+  enumno      String?
+  enumtext_en String?
+  enumtext_id String?
+  refid       String?
+  iscut       Int?      @default(0)
+  ord         Int?      @default(0)
+  amount      Float?    @default(0)
+  createdby   String?
+  createdip   String?
+  createat    DateTime? @db.Timestamp(6)
+  updatedby   String?
+  updatedip   String?
+  updatedat   DateTime? @db.Timestamp(6)
+  status      Int?      @default(0)
+
+  @@map("enum")
+}
+
+model enums {
+  enum_type String
+  enum_no   Int
+  enum_name String?
+
+  @@id([enum_type, enum_no])
+}
+
+model jen {
+  jenid   Int     @id @default(autoincrement())
+  strukid Int?
+  jennama String?
+  jenkode String?
+  akun    akun[]
+  struk   struk?  @relation(fields: [strukid], references: [strukid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model kas {
+  kasid         String    @id
+  kasdate       DateTime? @db.Date
+  akunid        String?
+  jenis         Int?      @db.SmallInt
+  sumber        Int?      @db.SmallInt
+  catatan       String?
+  kasnomor      String?
+  kastext       String?
+  opadd         String?
+  tgladd        DateTime? @db.Timestamp(6)
+  pcadd         String?
+  opedit        String?
+  tgledit       DateTime? @db.Timestamp(6)
+  pcedit        String?
+  status        Int?      @db.SmallInt
+  transferdate  DateTime? @db.Date
+  nomorrekening String?
+  companyid     String?
+  refid         String?
+  totalpaid     Float?
+}
+
+model kasdetail {
+  kasdetailid String  @id
+  kasid       String?
+  value       Float?
+  status      Int?
+  akunid      String?
+  statuspaid  String?
+  detail      String?
+  jumlah      Int?
+  price       Float?
+}
+
+model kategori {
+  kategoriid   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  kategorikode String?
+  kategorinama String?
+  opadd        String?
+  tgladd       DateTime? @db.Timestamp(6)
+  pcadd        String?
+  opedit       String?
+  tgledit      DateTime? @db.Timestamp(6)
+  pcedit       String?
+  userid       String?
+}
+
+model lang {
+  langid      String  @id
+  langtype    String
+  langno      String
+  langtext_en String?
+  langtext_id String?
+}
+
+model langs {
+  lang_type String
+  lang_text String
+  lang_en   String?
+  lang_id   String?
+
+  @@id([lang_type, lang_text])
+}
+
+model menus {
+  menu_id     Int     @id(map: "menu_pkey") @default(autoincrement())
+  menu_no     String?
+  menu_name   String?
+  menu_url    String?
+  menu_icon   String?
+  menu_level  Int?    @default(0)
+  menu_refid  Int?
+  menu_status String?
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model numbertemplate {
+  template  String?
+  months    String?
+  years     String?
+  companyid String?
+  type      String?
+
+  @@ignore
+}
+
+model produk {
+  produkid         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  jenis            Int?
+  kategoriid       String?   @db.Uuid
+  opadd            String?
+  tgladd           DateTime? @db.Timestamp(6)
+  pcadd            String?
+  opedit           String?
+  tgledit          DateTime? @db.Timestamp(6)
+  pcedit           String?
+  status           Int?
+  produkkode       String?
+  namaproduk       String?
+  companyid        String?
+  deskripsi_produk String?
+}
+
+model struk {
+  strukid    Int     @id @default(autoincrement())
+  strukkode  String?
+  struknama  String?
+  category   String?
+  categoryid String?
+  jen        jen[]
+}
+
+model submenus {
+  submenu_id     Int     @id(map: "submenu_pkey") @default(autoincrement())
+  menu_id        Int?
+  submenu_name   String?
+  submenu_status Int?    @default(0)
+}
+
+model subscription {
+  subs_id      String  @id @db.Uuid
+  package_name String?
+  total        Float?
+  tipe         String?
+  features     String?
+  description  String?
+}
+
+model tran {
+  tranid          String    @id(map: "tbtran_pkey")
+  contactid       String?
+  trandate        DateTime? @db.Date
+  tranduedate     DateTime? @db.Date
+  refid           String?
+  trantype        String
+  tranno          String
+  billto          String?
+  billcompany     String?
+  billcountry     String?
+  billstate       String?
+  billcity        String?
+  billdistrict    String?
+  billsubdistrict String?
+  billzip         String?
+  billaddress     String?
+  billemail       String?
+  billphone       String?
+  billfax         String?
+  shipto          String?
+  shipcompany     String?
+  shipcountry     String?
+  shipstate       String?
+  shipcity        String?
+  shipdistrict    String?
+  shipsubdistrict String?
+  shipzip         String?
+  shipaddress     String?
+  shipemail       String?
+  shipphone       String?
+  shipfax         String?
+  currencyid      String?
+  termid          String?
+  term            Int?      @default(0)
+  emp1id          String?
+  emp2id          String?
+  emp3id          String?
+  note            String?
+  memo            String?
+  tag             String?
+  subtotal        Float?    @default(0)
+  disc            Float?    @default(0)
+  discitem        Float?    @default(0)
+  isdisctax       Int?      @default(0)
+  istax           Int?
+  tax             Float?    @default(0)
+  totalafterdisc  Float?    @default(0)
+  warehouseid     String?
+  createdby       String?
+  createdip       String?
+  createdat       DateTime? @db.Timestamp(6)
+  updatedby       String?
+  updatedip       String?
+  updatedat       DateTime? @db.Timestamp(6)
+  status          Int?      @default(1)
+  enddate         DateTime? @db.Date
+  statuspaid      String?
+  totalpaid       Float?    @default(0)
+  voucher         String?
+  startdate       DateTime? @db.Date
+  productid       String?
+  varianid        String?
+  persendisc      Float?    @default(0)
+  rowitem         Float?    @default(1)
+  otherdiscount   Float?    @default(0)
+  companyid       String?
+  ppnamount       Float?
+  pphamount       Float?
+  priceincludetax Boolean?
+  deliverycharge  Float?
+  othercharge     Float?
+  grandtotal      Float?
+}
+
+model trandetail {
+  trandetailid    String    @id(map: "tbtrandetail_pkey")
+  tranid          String
+  varianid        String?
+  jumlah          Int?      @default(0)
+  harga           Float?    @default(0)
+  itemsubtotal    Float?    @default(0)
+  itemid          String?
+  itemtype        String?
+  itemqty         Float?    @default(0)
+  itemprice       Float?    @default(0)
+  itemtaxid       String?
+  itemtax         Float?    @default(0)
+  itemdisc        Float?    @default(0)
+  itemtotal       Float?    @default(0)
+  itemdiscpersen  Float?    @default(0)
+  iscut           Int?      @default(0)
+  itemdisctax     Float?    @default(0)
+  itemsubtotaltax Float?    @default(0)
+  itemtotaltax    Float?    @default(0)
+  ord             Int?      @default(1)
+  unit            String?
+  startdate       DateTime? @db.Timestamp(6)
+  enddate         DateTime? @db.Timestamp(6)
+  status          Int?      @default(1)
+  taxtype         Int?
+  totalafterdisc  Float?
+}
+
+model units {
+  unitid   String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  unitno   String?
+  unitname String?
+  opadd    String?
+  pcadd    String?
+  tgladd   DateTime? @db.Timestamp(6)
+  opedit   String?
+  pcedit   String?
+  tgledit  DateTime? @db.Timestamp(6)
+  status   Int?      @default(0)
+}
+
+model userpermissions {
+  userpermission_id String @id @db.Uuid
+  user_id           String @db.Uuid
+  submenu_id        Int?
+}
+
+model users {
+  userid               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  username             String?
+  email                String?
+  name                 String?
+  role_id              Int?
+  password_hash        String?
+  status               Int?      @default(0)
+  password_reset_token String?
+  verification_token   String?
+  auth_key             String?
+  avatar               String?
+  google_id            String?
+  fb_id                String?
+  created_by           String?
+  created_at           DateTime? @db.Timestamp(6)
+  updated_at           DateTime? @db.Timestamp(6)
+  updated_by           String?
+  companyid            String?
+  lang                 String?
+  address              String?
+}
+
+model varian {
+  varianid   String  @id @default(dbgenerated("uuid_generate_v4()"))
+  produkid   String
+  sku        String
+  stok       Int?
+  status     Int?
+  deskripsi  String?
+  produkfoto String?
+}
+
+model varianharga {
+  varianid     String @id @default(dbgenerated("uuid_generate_v4()"))
+  harga_beli   Float?
+  harga_jual   Float?
+  harga_grosir Float?
+}
