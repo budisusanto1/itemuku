@@ -54,7 +54,7 @@ func (ac *AuthController) SignUpUser(ctx *gin.Context) {
 		Name:         payload.Name,
 		Email:        strings.ToLower(payload.Email),
 		PasswordHash: HashedPassword,
-		RoleID:       0,
+		RoleID:       2,
 		CreatedAt:    now,
 	}
 	newUser.Username = newUser.Email

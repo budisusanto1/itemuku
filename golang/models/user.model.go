@@ -9,7 +9,7 @@ type User struct {
 	Name               string    `gorm:"column:name;type:text" json:"name"`
 	RoleID             int       `gorm:"column:role_id" json:"role_id"`
 	PasswordHash       string    `gorm:"column:password_hash;type:text;not null" json:"password_hash"`
-	Status             int       `gorm:"column:status;default:0" json:"status"`
+	Status             int       `gorm:"column:status;default:1" json:"status"`
 	PasswordResetToken string    `gorm:"column:password_reset_token;type:text" json:"password_reset_token"`
 	VerificationToken  string    `gorm:"column:verification_token;type:text" json:"verification_token"`
 	AuthKey            string    `gorm:"column:auth_key;type:text" json:"auth_key"`

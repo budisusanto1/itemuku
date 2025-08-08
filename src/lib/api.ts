@@ -23,7 +23,7 @@ export async function apiFetch(
     //}
   }
   // If input is a Request object, you could extend logic here if needed
-  alert(url);
+  // alert(input.headers.get('x-forwarded-for'));
   return fetch(url as RequestInfo, init);
 }
 

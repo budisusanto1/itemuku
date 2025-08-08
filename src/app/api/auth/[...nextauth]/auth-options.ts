@@ -1,43 +1,57 @@
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-
-import { NextAuthOptions, Session, User } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import {prisma} from '@/lib/prisma';
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { NextAuthOptions, Session, User } from "next-auth";
+import { JWT } from "next-auth/jwt";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "@/lib/prisma";
 
 const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: "Credentials",
       credentials: {
-        email: { label: 'Email', type: 'text' },
-        password: { label: 'Password', type: 'password' },
-        rememberMe: { label: 'Remember me', type: 'boolean' },
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
+        rememberMe: { label: "Remember me", type: "boolean" },
       },
       authorize: async (credentials) => {
         if (!credentials || !credentials.email || !credentials.password) {
-          throw new Error(JSON.stringify({ code: 400, message: 'Email dan password wajib diisi.' }));
+          throw new Error(
+            JSON.stringify({
+              code: 400,
+              message: "Email dan password wajib diisi.",
+            })
+          );
         }
 
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-console.log(response);
-          const result : any= await response.json();
-          console.log('API Response JSON:', result);
-          if (!response.ok || result.status !== 'success') {
-            throw new Error(JSON.stringify({ code: response.status, message: result.message || 'Login gagal' }));
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+              }),
+            }
+          );
 
+          const result: any = await response.json();
+          console.log("API Response JSON:", result);
+
+          if (!response.ok || result.status !== "success") {
+            throw new Error(
+              JSON.stringify({
+                code: response.status,
+                message: result.message || "Login gagal",
+              })
+            );
           }
+
           const user = result.user;
+          const token = result.access_token;
 
           return {
             id: user.id,
@@ -46,14 +60,13 @@ console.log(response);
             status: user.status,
             roleId: user.roleId,
             avatar: user.avatar,
+            token: token, // ✅ Token dimasukkan di sini
           };
         } catch (err: any) {
-          const message = err?.message || 'Login error';
-          throw new Error(
-            JSON.stringify({ code: 500, message: message }),
-          );
+          const message = err?.message || "Login error";
+          throw new Error(JSON.stringify({ code: 500, message: message }));
         }
-      }
+      },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -73,7 +86,6 @@ console.log(response);
         });
 
         if (existingUser) {
-          // Update `lastSignInAt` field for existing users
           await prisma.user.update({
             where: { id: existingUser.id },
             data: {
@@ -86,7 +98,7 @@ console.log(response);
           return {
             id: existingUser.id,
             email: existingUser.email,
-            name: existingUser.name || 'Anonymous',
+            name: existingUser.name || "Anonymous",
             status: existingUser.status,
             roleId: existingUser.roleId,
             roleName: existingUser.role.name,
@@ -100,27 +112,26 @@ console.log(response);
 
         if (!defaultRole) {
           throw new Error(
-            'Default role not found. Unable to create a new user.',
+            "Default role not found. Unable to create a new user."
           );
         }
 
-        // Create a new user and account
         const newUser = await prisma.user.create({
           data: {
             email: profile.email,
             name: profile.name,
-            password: '', // No password for OAuth users
+            password: "",
             avatar: profile.picture || null,
             emailVerifiedAt: new Date(),
             roleId: defaultRole.id,
-            status: 'ACTIVE',
+            status: "ACTIVE",
           },
         });
 
         return {
           id: newUser.id,
           email: newUser.email,
-          name: newUser.name || 'Anonymous',
+          name: newUser.name || "Anonymous",
           status: newUser.status,
           avatar: newUser.avatar,
           roleId: newUser.roleId,
@@ -130,7 +141,7 @@ console.log(response);
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
     maxAge: 24 * 60 * 60,
   },
   callbacks: {
@@ -143,29 +154,34 @@ console.log(response);
       token: JWT;
       user: User;
       session?: Session;
-      trigger?: 'signIn' | 'signUp' | 'update';
+      trigger?: "signIn" | "signUp" | "update";
     }) {
-      if (trigger === 'update' && session?.user) {
-        token = session.user;
-      } else {
-        if (user && user.roleId) {
-          const role = await prisma.userRole.findUnique({
-            where: { id: user.roleId },
-          });
+      console.log("JWT Callback START:", { token, user, session, trigger });
 
-          token.id = (user.id || token.sub) as string;
-          token.email = user.email;
-          token.name = user.name;
-          token.avatar = user.avatar;
-          token.status = user.status;
-          token.roleId = user.roleId;
-          token.roleName = role?.name;
-        }
+      if (trigger === "update" && session?.user) {
+        token = session.user;
+      } else if (user) {
+        const role = user.roleId
+          ? await prisma.userRole.findUnique({ where: { id: user.roleId } })
+          : null;
+
+        token.id = (user.id || token.sub) as string;
+        token.email = user.email;
+        token.name = user.name;
+        token.avatar = user.avatar;
+        token.status = user.status;
+        token.roleId = user.roleId;
+        token.roleName = role?.name || token.roleName;
+        token.token = (user as any).token || token.token; // ✅ Token selalu masuk
       }
 
+      console.log("JWT Callback END:", token);
       return token;
     },
+
     async session({ session, token }: { session: Session; token: JWT }) {
+      console.log("Session Callback START:", { session, token });
+
       if (session.user) {
         session.user.id = token.id;
         session.user.email = token.email;
@@ -174,12 +190,15 @@ console.log(response);
         session.user.status = token.status;
         session.user.roleId = token.roleId;
         session.user.roleName = token.roleName;
+        session.user.token = token.token; // ✅ Token dimasukkan ke session user
       }
+
+      console.log("Session Callback END:", session.user);
       return session;
     },
   },
   pages: {
-    signIn: '/signin',
+    signIn: "/signin",
   },
 };
 

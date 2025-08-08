@@ -6,15 +6,7 @@ import Select from 'react-select';
 import { Dialog } from '@headlessui/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-
-interface Variant {
-  image?: string | null;
-  file?: File | null;
-  hargaBeli: string;
-  hargaJual: string;
-  hargaGrosir: string;
-  sku: string;
-}
+import { apiFetch } from '@/lib/api';
 
 interface Option {
   label: string;
@@ -34,15 +26,10 @@ export default function ProdukCreate() {
     { label: 'Digital', value: 'digital' },
   ]);
 
-  const [variants, setVariants] = useState<Variant[]>([
-    { hargaBeli: '', hargaJual: '', hargaGrosir: '', sku: '' },
-  ]);
-
   const [categoryModal, setCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-
-  const addVariant = () => setVariants([...variants, { hargaBeli: '', hargaJual: '', hargaGrosir: '', sku: '' }]);
-  const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index));
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
   const addCategory = () => {
     if (!newCategory.trim()) return;
@@ -55,21 +42,20 @@ export default function ProdukCreate() {
 
   const onSubmit = async (data: any) => {
     const formData = new FormData();
-    formData.append('companyid', 'UUID-COMPANY-AKTIF'); 
-    formData.append('nama', data.nama);
-    formData.append('jenis', data.jenis.value);
-    formData.append('deskripsi', data.deskripsi || '');
-    formData.append('kategoriid', data.kategori.value);
 
-    variants.forEach((v, idx) => {
-      formData.append(`variants[${idx}][sku]`, v.sku);
-      formData.append(`variants[${idx}][hargaBeli]`, v.hargaBeli);
-      formData.append(`variants[${idx}][hargaJual]`, v.hargaJual);
-      formData.append(`variants[${idx}][hargaGrosir]`, v.hargaGrosir);
-      if (v.file) formData.append(`variants[${idx}][image]`, v.file);
-    });
+    const request = {
+      companyid: 'UUID-COMPANY-AKTIF',
+      productname: data.productname,
+      jenis: data.jenis.value,
+      deskripsi: data.deskripsi || '',
+      kategoriid: data.kategori.value,
+      hargabeli: data.hargabeli,
+      hargajual: data.hargajual,
+      image: file || null, // jika ada file, masukkan; jika tidak, null
+    };
 
-    const res = await fetch('/api/produk', { method: 'POST', body: formData });
+
+    const res = await apiFetch('/product/', { method: 'POST', body: JSON.stringify(request) });
     const result = await res.json();
     if (result.success) {
       alert('Produk berhasil disimpan!');
@@ -105,57 +91,53 @@ export default function ProdukCreate() {
         {/* Nama Produk */}
         <div>
           <label className="block mb-1 font-medium">Nama Produk</label>
-          <input {...register('nama', { required: 'Nama wajib diisi' })} className="border p-2 w-full rounded" />
+          <input {...register('productname', { required: 'Nama wajib diisi' })} className="border p-2 w-full rounded" />
         </div>
 
         {/* Jenis */}
         <div>
           <label className="block mb-1 font-medium">Jenis</label>
-          <Controller name="jenis" control={control} rules={{ required: 'Jenis wajib dipilih' }}
-            render={({ field }) => (<Select {...field} options={jenisOptions} placeholder="Pilih jenis" />)} />
+          <Controller
+            name="jenis"
+            control={control}
+            rules={{ required: 'Jenis wajib dipilih' }}
+            render={({ field }) => (<Select {...field} options={jenisOptions} placeholder="Pilih jenis" />)}
+          />
         </div>
 
         {/* Deskripsi */}
         <textarea {...register('deskripsi')} rows={3} className="border p-2 w-full rounded" placeholder="Deskripsi produk..." />
 
-        {/* Varian */}
+        {/* Harga Beli & Harga Jual */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1 font-medium">Harga Beli</label>
+            <input type="number" {...register('hargabeli', { required: 'Harga beli wajib diisi' })} className="border p-2 w-full rounded" />
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Harga Jual</label>
+            <input type="number" {...register('hargajual', { required: 'Harga jual wajib diisi' })} className="border p-2 w-full rounded" />
+          </div>
+        </div>
+
+        {/* Upload Gambar */}
         <div>
-          <h3 className="font-semibold text-lg mb-2">Varian Produk</h3>
-          {variants.map((v, idx) => (
-            <div key={idx} className="border p-4 rounded mb-3">
-              <div className="flex justify-between mb-3">
-                <h4 className="font-bold">Varian #{idx + 1}</h4>
-                {idx > 0 && <button type="button" onClick={() => removeVariant(idx)} className="text-red-600 hover:underline">Hapus</button>}
-              </div>
-
-              <input type="file" accept="image/*" onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    const updated = [...variants];
-                    updated[idx].image = reader.result as string;
-                    updated[idx].file = file;
-                    setVariants(updated);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }} />
-              {v.image && <Image src={v.image} alt="Preview" width={100} height={100} className="mt-2 rounded" />}
-
-              <input type="number" placeholder="Harga Beli" className="border p-2 w-full mt-2 rounded"
-                value={v.hargaBeli} onChange={(e) => { const up = [...variants]; up[idx].hargaBeli = e.target.value; setVariants(up); }} />
-              <input type="number" placeholder="Harga Jual" className="border p-2 w-full mt-2 rounded"
-                value={v.hargaJual} onChange={(e) => { const up = [...variants]; up[idx].hargaJual = e.target.value; setVariants(up); }} />
-              <input type="number" placeholder="Harga Grosir" className="border p-2 w-full mt-2 rounded"
-                value={v.hargaGrosir} onChange={(e) => { const up = [...variants]; up[idx].hargaGrosir = e.target.value; setVariants(up); }} />
-              <input type="text" placeholder="SKU" className="border p-2 w-full mt-2 rounded"
-                value={v.sku} onChange={(e) => { const up = [...variants]; up[idx].sku = e.target.value; setVariants(up); }} />
-            </div>
-          ))}
-          <button type="button" onClick={addVariant} className="bg-green-600 text-white px-3 py-2 rounded mt-2">
-            + Tambah Varian
-          </button>
+          <label className="block mb-1 font-medium">Gambar Produk</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const selectedFile = e.target.files?.[0];
+              if (selectedFile) {
+                setFile(selectedFile);
+                const reader = new FileReader();
+                reader.onloadend = () => setPreviewImage(reader.result as string);
+                reader.readAsDataURL(selectedFile);
+              }
+            }}
+            className="border p-2 w-full rounded"
+          />
+          {previewImage && <Image src={previewImage} alt="Preview" width={100} height={100} className="mt-2 rounded" />}
         </div>
 
         <div className="text-right">
