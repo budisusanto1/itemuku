@@ -6,24 +6,20 @@ import { NextRequest } from 'next/server';
  * Usage:
  *   apiFetch('/users', { method: 'GET' })
  *   apiFetch('https://external.com/endpoint') // untouched
- */
-export async function apiFetch(
+ */export async function apiFetch(
   input: string | Request,
   init?: RequestInit,
 ): Promise<Response> {
   let url = input;
 
-  // If input is a string and is a relative API path, prefix with base URL
   if (typeof input === 'string') {
-    //if (input.startsWith('/api/')) {
-      // Remove leading slash to avoid double slashes
-      url =
-        process.env.NEXT_PUBLIC_API_URL +
-        (input.startsWith('/') ? input : '/' + input);
-    //}
+    url =
+      process.env.NEXT_PUBLIC_API_URL +
+      (input.startsWith('/') ? input : '/' + input);
   }
-  // If input is a Request object, you could extend logic here if needed
-  // alert(input.headers.get('x-forwarded-for'));
+
+  // Jangan tambahkan header Authorization di sini
+
   return fetch(url as RequestInfo, init);
 }
 

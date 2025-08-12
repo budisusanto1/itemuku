@@ -8,10 +8,11 @@ declare module 'next-auth' {
       name: string;
       email: string;
       avatar?: string | null;
+      image?: string | null; // jika kamu pakai image juga
       roleId?: string | null;
       roleName?: string | null;
       token?: string | null;
-      status: string;
+      status?: string; // dibuat opsional
     };
   }
 
@@ -20,9 +21,11 @@ declare module 'next-auth' {
     name: string;
     email: string;
     avatar?: string | null;
+    image?: string | null;
     roleId?: string | null;
+    roleName?: string | null;
     token?: string | null;
-    status: string;
+    status?: string;
   }
 }
 
@@ -32,9 +35,10 @@ declare module 'next-auth/jwt' {
     name: string;
     email: string;
     avatar?: string | null;
+    image?: string | null;
     roleId?: string | null;
     roleName?: string | null;
     token?: string | null;
-    status: string;
+    status?: string;
   }
 }
